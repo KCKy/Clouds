@@ -17,7 +17,6 @@ public class CloudySkyRenderPass : ScriptableRenderPass
 
     void UpdateSettings()
     {
-        return;
         var volumeComponent = VolumeManager.instance.stack.GetComponent<CloudsVolumeComponent>();
         ColorParameter color = volumeComponent.testColor;
         _material.color = color.overrideState ? color.value : Color.white;
