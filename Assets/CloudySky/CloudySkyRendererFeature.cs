@@ -17,6 +17,7 @@ public class CloudySkyRenderPass : ScriptableRenderPass
 
     void UpdateSettings()
     {
+        return;
         var volumeComponent = VolumeManager.instance.stack.GetComponent<CloudsVolumeComponent>();
         ColorParameter color = volumeComponent.testColor;
         _material.color = color.overrideState ? color.value : Color.white;
@@ -47,13 +48,13 @@ public class CloudySkyRenderPass : ScriptableRenderPass
 
 public class CloudySkyRendererFeature : ScriptableRendererFeature
 {    
-    Material _material;
+
+    [SerializeField] Material material;
     CloudySkyRenderPass _pass;
 
     public override void Create()
     { 
-        _material = new Material(Shader.Find("Team-Like Team/Clouds"));
-        _pass = new CloudySkyRenderPass(_material);
+        _pass = new CloudySkyRenderPass(material);
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)

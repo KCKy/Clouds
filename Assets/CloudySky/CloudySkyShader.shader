@@ -6,6 +6,7 @@ Shader "Team-Like Team/Clouds"
        _MaxSteps ("Max Steps", Integer) = 150
        _StepSize ("Step Size", Float) = 0.06
        _OriginDepth ("Origin Depth", Float) = 3
+       [NoScaleOffset] _Noise ("Noise Texture", 3D) = ""
    }
    SubShader
    {
@@ -22,10 +23,18 @@ Shader "Team-Like Team/Clouds"
            float4 _Color;
            int _MaxSteps;
            float _StepSize;
+          
+           TEXTURE3D(_Noise);
+           SAMPLER(sampler_Noise);
 
            float signed_distance_sphere(float3 position, float radius)
            {
                return length(position) - radius;
+           }
+
+           float noise(float3 x)
+           {
+               return SAMPLE_TEXTURE3D(_Noise, sampler_Noise, x).r * 2. - 1;
            }
 
            float scene(float3 position)
@@ -44,8 +53,8 @@ Shader "Team-Like Team/Clouds"
                    float density = scene(p);
                    if (density > 0.0)
                    {
-                       float4 color = _Color * density;
-                       color.rgb *= color.a;
+                       float4 color = SAMPLE_TEXTURE3D(_Noise, sampler_Noise, p) * density;
+                       color.rgb *= _Color.a;
                        result += color * (1.0 - result.a);
                    }
 
