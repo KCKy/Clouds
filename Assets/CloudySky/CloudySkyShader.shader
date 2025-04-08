@@ -2,7 +2,10 @@ Shader "Team-Like Team/Clouds"
 {
    Properties
    {
-       _Color ("Test Color", Color) = (0, 0, 0, 0)
+       _Color ("Test Color", Color) = (1, 1, 1, 1)
+       _MaxSteps ("Max Steps", Integer) = 150
+       _StepSize ("Step Size", Float) = 0.06
+       _OriginDepth ("Origin Depth", Float) = 3
    }
    SubShader
    {
@@ -17,10 +20,48 @@ Shader "Team-Like Team/Clouds"
            #pragma fragment frag
 
            float4 _Color;
+           int _MaxSteps;
+           float _StepSize;
+
+           float signed_distance_sphere(float3 position, float radius)
+           {
+               return length(position) - radius;
+           }
+
+           float scene(float3 position)
+           {
+               return -signed_distance_sphere(position, 1);
+           }
+
+           float4 raymarch(float3 origin, float3 direction)
+           {
+               float4 result = 0.0;
+               float depth = 0.0;
+
+               for (int i = 0; i < _MaxSteps; i++)
+               {
+                   float3 p = origin + depth * direction;
+                   float density = scene(p);
+                   if (density > 0.0)
+                   {
+                       float4 color = _Color * density;
+                       color.rgb *= color.a;
+                       result += color * (1.0 - result.a);
+                   }
+
+                   depth += _StepSize;
+               }
+
+               return result;
+           }
 
            float4 frag(Varyings input) : SV_Target0
            {
-               return SAMPLE_TEXTURE2D_X_LOD(_BlitTexture, sampler_LinearRepeat, input.texcoord.xy, _BlitMipLevel) + _Color;
+               float2 uv = input.texcoord.xy - 0.5f;
+               uv.x *= _ScreenParams.x / _ScreenParams.y;
+               float3 origin = float3(0, 0, 3);
+               float3 direction = float3(uv, -1);
+               return float4(raymarch(origin, direction).rgb, 1);
            }
 
            ENDHLSL
