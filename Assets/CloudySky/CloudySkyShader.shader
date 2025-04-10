@@ -60,7 +60,7 @@ Shader "Team-Like Team/Clouds"
 
            float scene(float3 position)
            {
-               return -signed_distance_sphere(position, 1);
+               return fractalNoise(position + _PosOffset.xyz) - signed_distance_sphere(position, 1);
            }
 
            float4 raymarch(float3 origin, float3 direction)
@@ -71,7 +71,7 @@ Shader "Team-Like Team/Clouds"
                for (int i = 0; i < _MaxSteps; i++)
                {
                    float3 p = origin + depth * direction;
-                   float density = max(scene(p), 0) * fractalNoise(p + _PosOffset.xyz);
+                   float density = scene(p);
                    if (density > 0.0)
                    {
                        float4 color = _Color;
