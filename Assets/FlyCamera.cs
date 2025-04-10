@@ -24,6 +24,17 @@ public class FlyCamera : MonoBehaviour
 
     void HandleMouseLook()
     {
+        if (Cursor.lockState == CursorLockMode.Locked)
+        {
+            float mouseX = Input.mousePositionDelta.x;
+            float mouseY = Input.mousePositionDelta.y;
+            _yaw += mouseX * lookSpeed;
+            _pitch -= mouseY * lookSpeed;
+            _pitch = Mathf.Clamp(_pitch, -89f, 89f);
+
+            transform.eulerAngles = new(_pitch, _yaw, 0f);
+        }
+
         if (Cursor.lockState != CursorLockMode.Locked && Input.GetMouseButtonDown(1))
         {
             Cursor.lockState = CursorLockMode.Locked;
@@ -34,17 +45,6 @@ public class FlyCamera : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
-
-        if (Cursor.lockState != CursorLockMode.Locked)
-            return;
-
-        float mouseX = Input.mousePositionDelta.x;
-        float mouseY = Input.mousePositionDelta.y;
-        _yaw += mouseX * lookSpeed;
-        _pitch -= mouseY * lookSpeed;
-        _pitch = Mathf.Clamp(_pitch, -89f, 89f);
-
-        transform.eulerAngles = new(_pitch, _yaw, 0f);
     }
 
     void HandleMovement()

@@ -18,7 +18,7 @@ public class CloudsVolumeController : MonoBehaviour
     void Update()
     {
         if (_cloudsVolumeComponent == null) return;
-        _cloudsVolumeComponent.testColor.overrideState = true;
-        _cloudsVolumeComponent.testColor.value = _palette[Time.time];
+        //_cloudsVolumeComponent.testColor.overrideState = true;
+        //_cloudsVolumeComponent.testColor.value = _palette[Time.time];
     }
 }

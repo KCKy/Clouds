@@ -1,8 +1,6 @@
 using System;
-using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-
 
 [Serializable]
 [SupportedOnRenderPipeline]
@@ -11,5 +9,5 @@ using UnityEngine.Rendering.Universal;
 public class CloudsVolumeComponent : VolumeComponent, IPostProcessComponent
 {
     public bool IsActive() => true;
-    public ColorParameter testColor = new(Color.black);
+    //public ColorParameter testColor = new(Color.black);
 }

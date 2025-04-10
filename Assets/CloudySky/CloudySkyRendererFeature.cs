@@ -1,8 +1,8 @@
 using UnityEngine;
-using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.RenderGraphModule.Util;
+using UnityEngine.Rendering.Universal;
 
 public class CloudySkyRenderPass : ScriptableRenderPass
 {
@@ -17,9 +17,9 @@ public class CloudySkyRenderPass : ScriptableRenderPass
 
     void UpdateSettings()
     {
-        var volumeComponent = VolumeManager.instance.stack.GetComponent<CloudsVolumeComponent>();
-        ColorParameter color = volumeComponent.testColor;
-        _material.color = color.overrideState ? color.value : Color.white;
+        //var volumeComponent = VolumeManager.instance.stack.GetComponent<CloudsVolumeComponent>();
+        //ColorParameter color = volumeComponent.testColor;
+        //_material.color = color.overrideState ? color.value : Color.white;
     }
 
     public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -46,14 +46,13 @@ public class CloudySkyRenderPass : ScriptableRenderPass
 }
 
 public class CloudySkyRendererFeature : ScriptableRendererFeature
-{    
-
+{
     [SerializeField] Material material;
     CloudySkyRenderPass _pass;
 
     public override void Create()
-    { 
-        _pass = new CloudySkyRenderPass(material);
+    {
+        _pass = new(material);
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
