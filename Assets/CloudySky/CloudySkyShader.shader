@@ -8,6 +8,7 @@ Shader "Team-Like Team/Clouds"
        _StepSize ("Step Size", Float) = 0.06
        _PosOffset ("Cloud Pattern Offset", Vector) = (0, 0, 0, 0)
        [NoScaleOffset] _Noise ("Noise Texture", 3D) = ""
+       [NoScaleOffset] _Dither ("Dither Texture", 2D) = ""
        _NoiseFrequency ("Noise Frequency", Float) = 0.1
        _NoiseOctaves ("Noise Octaves", Integer) = 3
        _NoiseOctaveOffset ("Noise Offset per Octave", Vector) = (0, 0, 0, 0)
@@ -42,9 +43,12 @@ Shader "Team-Like Team/Clouds"
 
            TEXTURE2D(_CameraDepthTexture);
            SAMPLER(sampler_CameraDepthTexture);
-
+           
            TEXTURE3D(_Noise);
            SAMPLER(sampler_Noise);
+
+           TEXTURE2D(_Dither);
+           SAMPLER(sampler_Dither);
 
            float signed_distance_sphere(float3 position, float radius)
            {
@@ -75,10 +79,10 @@ Shader "Team-Like Team/Clouds"
                return fractalNoise(position + _PosOffset.xyz) - signed_distance_sphere(position, 1);
            }
 
-           float4 raymarch(float3 origin, float3 direction, float maxDepth)
+           float4 raymarch(float3 origin, float3 direction, float startDepth, float maxDepth)
            {
                float4 result = 0.0;
-               float depth = 0.0;
+               float depth = startDepth;
                float3 sunDir = normalize(_SunDirection.xyz);
 
                for (int i = 0; i < _MaxSteps; i++)
@@ -119,7 +123,9 @@ Shader "Team-Like Team/Clouds"
                float rawDepth = SAMPLE_TEXTURE2D(_CameraDepthTexture, sampler_CameraDepthTexture, uv).r;
                float depth = LinearEyeDepth(rawDepth, _ZBufferParams);
 
-               float4 clouds = raymarch(origin, direction, depth);
+               float startDepth = _StepSize * SAMPLE_TEXTURE2D(_Dither, sampler_Dither, uv * _ScreenParams.xy / 1024).r;
+
+               float4 clouds = raymarch(origin, direction, startDepth, depth);
                float4 blit = SAMPLE_TEXTURE2D(_BlitTexture, sampler_BlitTexture, uv);
 
                float3 color = blit.rgb * (1 - clouds.a) + clouds.rgb;
