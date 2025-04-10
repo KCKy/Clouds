@@ -5,7 +5,6 @@ Shader "Team-Like Team/Clouds"
        _Color ("Test Color", Color) = (1, 1, 1, 1)
        _MaxSteps ("Max Steps", Integer) = 150
        _StepSize ("Step Size", Float) = 0.06
-       _OriginDepth ("Origin Depth", Float) = 3
        [NoScaleOffset] _Noise ("Noise Texture", 3D) = ""
        _NoiseFrequency ("Noise Frequency", Float) = 0.1
        _NoiseOctaves ("Noise Octaves", Integer) = 3
@@ -82,13 +81,20 @@ Shader "Team-Like Team/Clouds"
                return result;
            }
 
-           float4 frag(Varyings input) : SV_Target0
+           float4 frag(Varyings input) : SV_Target
            {
-               float2 uv = input.texcoord.xy - 0.5f;
-               uv.x *= _ScreenParams.x / _ScreenParams.y;
-               float3 origin = float3(0, 0, 3);
-               float3 direction = float3(uv, -1);
-               return float4(raymarch(origin, direction).rgb, 1);
+               float2 uv = input.texcoord.xy * 2.0 - 1.0; // NDC [-1, 1]
+
+               float4 worldNear = mul(UNITY_MATRIX_I_VP, float4(uv.x, -uv.y, 1.0, 1.0));
+               worldNear.xyz /= worldNear.w;
+
+               float4 worldFar = mul(UNITY_MATRIX_I_VP, float4(uv.x, -uv.y, 0.0, 1.0));
+               worldFar.xyz /= worldFar.w;
+
+               float3 origin = worldNear.xyz;
+               float3 direction = normalize(worldFar.xyz - worldNear.xyz);
+
+               return float4(raymarch(origin, direction).rgb, 1.0);
            }
 
            ENDHLSL
