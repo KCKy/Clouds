@@ -5,10 +5,11 @@ Shader "Team-Like Team/Clouds"
        _Color ("Test Color", Color) = (1, 1, 1, 1)
        _MaxSteps ("Max Steps", Integer) = 150
        _StepSize ("Step Size", Float) = 0.06
+       [ShowAsVector3] _PosOffset ("Cloud Pattern Offset", Vector) = (0, 0, 0, 0)
        [NoScaleOffset] _Noise ("Noise Texture", 3D) = ""
        _NoiseFrequency ("Noise Frequency", Float) = 0.1
        _NoiseOctaves ("Noise Octaves", Integer) = 3
-       [ShowAsVector3] _NoiseOctaveOffset ("Noise Octave Offset", Vector) = (17.37, 48.51, 192.21)
+       [ShowAsVector3] _NoiseOctaveOffset ("Noise Offset per Octave", Vector) = (0, 0, 0, 0)
    }
    SubShader
    {
@@ -28,6 +29,7 @@ Shader "Team-Like Team/Clouds"
            float _NoiseFrequency;
            float _NoiseOctaves;
            float4 _NoiseOctaveOffset;
+           float4 _PosOffset;
           
            TEXTURE3D(_Noise);
            SAMPLER(sampler_Noise);
@@ -45,10 +47,13 @@ Shader "Team-Like Team/Clouds"
            float fractalNoise(float3 x)
            {
                float res = 0;
-               int freq = 1;
+               float factor = 2.02;
+               float amplitude = 1;
                for (int i = 0; i < _NoiseOctaves; i++) {     
-                   res += noise(x * freq + _NoiseOctaveOffset * i) / freq;
-                   freq *= 2;
+                   res += amplitude * noise(x + _NoiseOctaveOffset * i);
+                   x *= factor;
+                   factor += 0.21;
+                   amplitude *= 0.5;
                }
                return res;
            }
@@ -66,7 +71,7 @@ Shader "Team-Like Team/Clouds"
                for (int i = 0; i < _MaxSteps; i++)
                {
                    float3 p = origin + depth * direction;
-                   float density = max(scene(p), 0) * fractalNoise(p);
+                   float density = max(scene(p), 0) * fractalNoise(p + _PosOffset.xyz);
                    if (density > 0.0)
                    {
                        float4 color = _Color;
