@@ -7,6 +7,9 @@ Shader "Team-Like Team/Clouds"
        _StepSize ("Step Size", Float) = 0.06
        _OriginDepth ("Origin Depth", Float) = 3
        [NoScaleOffset] _Noise ("Noise Texture", 3D) = ""
+       _NoiseFrequency ("Noise Frequency", Float) = 0.1
+       _NoiseOctaves ("Noise Octaves", Integer) = 3
+       [ShowAsVector3] _NoiseOctaveOffset ("Noise Octave Offset", Vector) = (17.37, 48.51, 192.21)
    }
    SubShader
    {
@@ -23,6 +26,9 @@ Shader "Team-Like Team/Clouds"
            float4 _Color;
            int _MaxSteps;
            float _StepSize;
+           float _NoiseFrequency;
+           float _NoiseOctaves;
+           float4 _NoiseOctaveOffset;
           
            TEXTURE3D(_Noise);
            SAMPLER(sampler_Noise);
@@ -34,7 +40,18 @@ Shader "Team-Like Team/Clouds"
 
            float noise(float3 x)
            {
-               return SAMPLE_TEXTURE3D(_Noise, sampler_Noise, x).r * 2. - 1;
+               return SAMPLE_TEXTURE3D(_Noise, sampler_Noise, x * _NoiseFrequency).r * 2. - 1;
+           }
+
+           float fractalNoise(float3 x)
+           {
+               float res = 0;
+               int freq = 1;
+               for (int i = 0; i < _NoiseOctaves; i++) {     
+                   res += noise(x * freq + _NoiseOctaveOffset * i) / freq;
+                   freq *= 2;
+               }
+               return res;
            }
 
            float scene(float3 position)
@@ -50,11 +67,12 @@ Shader "Team-Like Team/Clouds"
                for (int i = 0; i < _MaxSteps; i++)
                {
                    float3 p = origin + depth * direction;
-                   float density = scene(p);
+                   float density = max(scene(p), 0) * fractalNoise(p);
                    if (density > 0.0)
                    {
-                       float4 color = SAMPLE_TEXTURE3D(_Noise, sampler_Noise, p) * density;
-                       color.rgb *= _Color.a;
+                       float4 color = _Color;
+                       color.a *= density;
+                       color.rgb *= color.a;
                        result += color * (1.0 - result.a);
                    }
 

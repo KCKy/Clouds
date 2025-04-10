@@ -80,3 +80,6 @@ crashlytics-build.properties
 .vsconfig
 /UIElementsSchema/
 .idea/
+
+# Do not commit the 128MB noise texture
+noise3.asset
