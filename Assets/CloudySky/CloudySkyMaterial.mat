@@ -90,6 +90,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints:
     - _MaxSteps: 40
+    - _MaxSunSteps: 10
     - _NoiseOctaves: 6
     m_Floats:
     - _AddPrecomputedVelocity: 0
@@ -129,15 +130,18 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.66, g: 0.66, b: 0.75, a: 1}
+    - _AmbientLight: {r: 0.277, g: 0.277, b: 0.277, a: 1}
+    - _BallScale: {r: 3, g: 1, b: 3, a: 0}
+    - _BaseColor: {r: 0.305, g: 0.305, b: 0.305, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _LightColor: {r: 1.0592737, g: 0.6355642, b: 0.31778204, a: 1}
+    - _LightColor: {r: 1.4980392, g: 1.1641905, b: 0.91380394, a: 1}
     - _NoiseOctaveOffset: {r: 12.49, g: 24.69, b: 20.91, a: 0}
-    - _PosOffset: {r: 14.3, g: -12.55, b: 15.82, a: 0}
+    - _PosOffset: {r: 1, g: -12.55, b: 15.82, a: 0}
     - _ShadowColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SunDirection: {r: 4.3, g: 10, b: -7.3, a: 0}
+    - _Sunlight: {r: 1.1313709, g: 0.8692726, b: 0.67429703, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &6043687739360127644

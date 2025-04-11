@@ -3,17 +3,21 @@ Shader "Team-Like Team/Clouds"
    Properties
    {
        [MainColor] [HDR] _BaseColor ("Base Color", Color) = (0.66, 0.66, 0.825, 1)
-       [HDR] _LightColor ("Light Color", Color) = (0.8, 0.48, 0.24, 1)
+       [HDR] _Sunlight ("Sunlight", Color) = (0.8, 0.48, 0.24, 1)
+       [HDR] _AmbientLight ("Ambient Light", Color) = (0.1, 0.1, 0.1, 1)
        _MaxSteps ("Max Steps", Integer) = 150
        _StepSize ("Step Size", Float) = 0.06
        _PosOffset ("Cloud Pattern Offset", Vector) = (0, 0, 0, 0)
+       _BallScale ("Ball Scale", Vector) = (1, 1, 1, 0)
+       _DensityMultiplier ("Density Multiplier", Float) = 5
        [NoScaleOffset] _Noise ("Noise Texture", 3D) = ""
        [NoScaleOffset] _Dither ("Dither Texture", 2D) = ""
        _NoiseFrequency ("Noise Frequency", Float) = 0.1
        _NoiseOctaves ("Noise Octaves", Integer) = 3
        _NoiseOctaveOffset ("Noise Offset per Octave", Vector) = (0, 0, 0, 0)
-       _SunSampleStep ("Sun Sampling Step", Float) = 0.3
        _SunDirection ("Sun Direction", Vector) = (0, 5, 1, 0)
+       _MaxSunSteps ("Max Steps Towards Sun", Integer) = 10
+       _SunSampleStep ("Sun Sampling Step", Float) = 0.3
    }
    SubShader
    {
@@ -28,14 +32,18 @@ Shader "Team-Like Team/Clouds"
            #pragma fragment frag
            
            float4 _BaseColor;
-           float4 _LightColor;
+           float4 _Sunlight;
+           float4 _AmbientLight;
            int _MaxSteps;
            float _StepSize;
+           float4 _PosOffset;
+           float4 _BallScale;
+           float _DensityMultiplier;
            float _NoiseFrequency;
            float _NoiseOctaves;
            float4 _NoiseOctaveOffset;
-           float4 _PosOffset;
            float4 _SunDirection;
+           int _MaxSunSteps;
            float _SunSampleStep;
           
            // TEXTURE2D(_BlitTexture); Already defined
@@ -76,34 +84,66 @@ Shader "Team-Like Team/Clouds"
 
            float scene(float3 position)
            {
-               return fractalNoise(position + _PosOffset.xyz) - signed_distance_sphere(position, 1);
+               return fractalNoise(position + _PosOffset.xyz) - signed_distance_sphere(position / _BallScale, 1);
            }
 
+           float raymarchTransmittedLight(float3 destination, float initialDensity) {
+               float3 sunDir = normalize(_SunDirection.xyz);
+               float depth = 0;
+               float lastDensity = initialDensity;
+               float intensity = 1;
+
+               for (int i = 0; i < _MaxSteps; i++)
+               {
+                    float3 p = destination + depth * sunDir;
+                    float step = _StepSize;
+                    float density = scene(p);
+                    float lineDensity = (density + lastDensity) * step * _DensityMultiplier;
+                    if (lineDensity > 0.0)
+                    {
+                        float transparency = exp(-lineDensity);
+                        intensity *= transparency;
+                    }
+
+                    depth += _StepSize;
+                    lastDensity = density;
+               }
+
+               return intensity;
+           }
+
+           float3 getColor(float3 position, float density) {
+               float light = raymarchTransmittedLight(position, density);
+               return _BaseColor + _AmbientLight * clamp(1 - density, 0, 1) + _Sunlight * light;
+           }
+
+           // returns premultiplied color
            float4 raymarch(float3 origin, float3 direction, float startDepth, float maxDepth)
            {
-               float4 result = 0.0;
+               float3 result = 0.0;
                float depth = startDepth;
-               float3 sunDir = normalize(_SunDirection.xyz);
+               float lastDensity = 0;
+               float intensity = 1;
 
                for (int i = 0; i < _MaxSteps; i++)
                {
                     float3 p = origin + depth * direction;
                     float step = max(min(depth, maxDepth) - depth + _StepSize, 0);
                     float density = scene(p);
-                    float normalizedDensity = density * step / _StepSize;
-                    if (normalizedDensity > 0.0)
+                    float lineDensity = (density + lastDensity) * step * _DensityMultiplier;
+                    if (lineDensity > 0.0)
                     {
-                        float light = clamp((density - scene(p + _SunSampleStep * sunDir)) / _SunSampleStep, 0, 1);
-                        float3 lin = _BaseColor + _LightColor * light;
-                        float4 color = float4(lin * (1 - normalizedDensity), normalizedDensity);
-                        color.rgb *= color.a;
-                        result += color * (1.0 - result.a);
+                        float transparency = exp(-lineDensity);
+                        float3 color = getColor(p, density);
+                        result += color * (1 - transparency) * intensity;
+                        intensity *= transparency;
                     }
 
                     depth += _StepSize;
+                    lastDensity = density;
                }
 
-               return result;
+               return float4(result, 1 - intensity);
            }
 
            float4 frag(Varyings input) : SV_Target
