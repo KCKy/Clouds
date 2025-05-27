@@ -752,7 +752,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  - {fileID: 2100000, guid: 6be7e22323794344fae4ffa2e751457f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -796,7 +796,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   targetCamera: {fileID: 925993722}
   targetMesh: {fileID: 1545760791}
-  distanceFromCamera: 1000
+  distanceFromCamera: 100
 --- !u!1 &1930640055
 GameObject:
   m_ObjectHideFlags: 0
