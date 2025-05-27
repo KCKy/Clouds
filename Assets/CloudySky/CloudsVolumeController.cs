@@ -1,12 +1,10 @@
 using UnityEngine;
 using UnityEngine.Rendering;
-using Useful.Math;
 
 public class CloudsVolumeController : MonoBehaviour
 {
     public Volume volume;
     CloudsVolumeComponent _cloudsVolumeComponent;
-    readonly Palette _palette = Palette.OrangeBlue;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
