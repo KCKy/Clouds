@@ -2,7 +2,6 @@ Shader "Team-Like Team/Clouds"
 {
    Properties
    {
-       [MainColor] [HDR] _BaseColor ("Base Color", Color) = (0.66, 0.66, 0.825, 1)
        [HDR] _Sunlight ("Sunlight", Color) = (0.8, 0.48, 0.24, 1)
        [HDR] _AmbientLight ("Ambient Light", Color) = (0.1, 0.1, 0.1, 1)
        _MaxSteps ("Max Steps", Integer) = 150
@@ -18,6 +17,7 @@ Shader "Team-Like Team/Clouds"
        _SunDirection ("Sun Direction", Vector) = (0, 5, 1, 0)
        _MaxSunSteps ("Max Steps Towards Sun", Integer) = 10
        _SunSampleStep ("Sun Sampling Step", Float) = 0.3
+       _UnitsPerTexel ("Units Per Texel", Float) = 1
    }
    SubShader
    {
@@ -31,20 +31,23 @@ Shader "Team-Like Team/Clouds"
            #pragma vertex Vert
            #pragma fragment frag
            
-           float4 _BaseColor;
-           float4 _Sunlight;
-           float4 _AmbientLight;
+           float3 _Sunlight;
+           float3 _AmbientLight;
            int _MaxSteps;
            float _StepSize;
-           float4 _PosOffset;
-           float4 _BallScale;
+           float3 _PosOffset;
+           float3 _BallScale;
            float _DensityMultiplier;
            float _NoiseFrequency;
            float _NoiseOctaves;
-           float4 _NoiseOctaveOffset;
-           float4 _SunDirection;
+           float _NoiseOctaveOffset;
+           float3 _SunDirection;
            int _MaxSunSteps;
            float _SunSampleStep;
+           float3 _LayerNoiseOctaveOffset;
+           int _LayerNoiseOctaves;
+           float _LayerNoiseFrequency;
+           float _UnitsPerTexel;
           
            // TEXTURE2D(_BlitTexture); Already defined
            SAMPLER(sampler_BlitTexture);
@@ -57,24 +60,42 @@ Shader "Team-Like Team/Clouds"
 
            TEXTURE2D(_Dither);
            SAMPLER(sampler_Dither);
+           float4 _Dither_TexelSize;
+
+           TEXTURE2D(_CloudMap);
+           SAMPLER(sampler_CloudMap);
+           float4 _CloudMap_TexelSize;
 
            float signed_distance_sphere(float3 position, float radius)
            {
                return length(position) - radius;
            }
-
-           float noise(float3 x)
-           {
-               return _Noise.SampleLevel(sampler_Noise, x * _NoiseFrequency, 0).r * 2. - 1;
-           }
-
+           
            float fractalNoise(float3 x)
            {
                float res = 0;
                float factor = 2.02;
                float amplitude = 0.5;
-               for (int i = 0; i < _NoiseOctaves; i++) {     
-                   res += amplitude * noise(x + _NoiseOctaveOffset * i);
+               for (int i = 0; i < _NoiseOctaves; i++) {
+                   float3 pos = x + _NoiseOctaveOffset * i;
+                   float noise = _Noise.SampleLevel(sampler_Noise, pos * _NoiseFrequency, 0).x * 2. - 1;
+                   res += amplitude * noise;
+                   x *= factor;
+                   factor += 0.21;
+                   amplitude *= 0.5;
+               }
+               return res;
+           }
+           
+           float2 layerNoise(float3 x)
+           {
+               float2 res = 0;
+               float factor = 2.02;
+               float amplitude = 0.5;
+               for (int i = 0; i < _LayerNoiseOctaves; i++) {
+                   float3 pos = x + _LayerNoiseOctaveOffset * i; 
+                   float2 noise = _Noise.SampleLevel(sampler_Noise, pos * _LayerNoiseFrequency, 0).xy * 2. - 1;
+                   res += amplitude * noise;
                    x *= factor;
                    factor += 0.21;
                    amplitude *= 0.5;
@@ -82,9 +103,12 @@ Shader "Team-Like Team/Clouds"
                return res;
            }
 
-           float scene(float3 position)
+           float4 sample_cloud_map(float3 position)
            {
-               return fractalNoise(position + _PosOffset.xyz) - signed_distance_sphere(position / _BallScale, 1);
+                float2 base = float2(position.x, position.y) / _UnitsPerTexel; 
+                float2 offset = layerNoise(position);
+                float2 uv = (base + offset) * _CloudMap_TexelSize.xy;
+                return _CloudMap.SampleLevel(sampler_CloudMap, uv, 0);
            }
 
            float raymarchTransmittedLight(float3 destination, float initialDensity) {
@@ -97,7 +121,7 @@ Shader "Team-Like Team/Clouds"
                {
                     float3 p = destination + depth * sunDir;
                     float step = _StepSize;
-                    float density = scene(p);
+                    float density = fractalNoise(p);
                     float lineDensity = (density + lastDensity) * step * _DensityMultiplier;
                     if (lineDensity > 0.0)
                     {
@@ -112,12 +136,11 @@ Shader "Team-Like Team/Clouds"
                return intensity;
            }
 
-           float3 getColor(float3 position, float density) {
-               float light = raymarchTransmittedLight(position, density);
-               return _BaseColor + _AmbientLight * clamp(1 - density, 0, 1) + _Sunlight * light;
+           float3 getColor(float3 color, float3 position, float density) {
+               //float light = raymarchTransmittedLight(position, density);
+               return color + _AmbientLight * clamp(1 - density, 0, 1) /*+ _Sunlight * light*/;
            }
-
-           // returns premultiplied color
+           
            float4 raymarch(float3 origin, float3 direction, float startDepth, float maxDepth)
            {
                float3 result = 0.0;
@@ -128,13 +151,14 @@ Shader "Team-Like Team/Clouds"
                for (int i = 0; i < _MaxSteps; i++)
                {
                     float3 p = origin + depth * direction;
+                    float4 baseColor = sample_cloud_map(p);
                     float step = max(min(depth, maxDepth) - depth + _StepSize, 0);
-                    float density = scene(p);
+                    float density = fractalNoise(p) * baseColor.a;
                     float lineDensity = (density + lastDensity) * step * _DensityMultiplier;
                     if (lineDensity > 0.0)
                     {
                         float transparency = exp(-lineDensity);
-                        float3 color = getColor(p, density);
+                        float3 color = getColor(p, density, baseColor);
                         result += color * (1 - transparency) * intensity;
                         intensity *= transparency;
                     }
@@ -146,9 +170,14 @@ Shader "Team-Like Team/Clouds"
                return float4(result, 1 - intensity);
            }
 
-           float4 frag(Varyings input) : SV_Target
+           struct ray
            {
-               float2 uv = input.texcoord.xy;
+               float3 origin;
+               float3 direction;
+           };
+           
+           ray get_ray(float2 uv)
+           {
                float2 ndcuv = uv * 2.0 - 1.0; // NDC [-1, 1]
 
                float4 worldNear = mul(UNITY_MATRIX_I_VP, float4(ndcuv.x, -ndcuv.y, 1.0, 1.0));
@@ -157,19 +186,35 @@ Shader "Team-Like Team/Clouds"
                float4 worldFar = mul(UNITY_MATRIX_I_VP, float4(ndcuv.x, -ndcuv.y, 0.0, 1.0));
                worldFar.xyz /= worldFar.w;
 
-               float3 origin = worldNear.xyz;
-               float3 direction = normalize(worldFar.xyz - worldNear.xyz);
+               ray result;
+               result.origin = worldNear.xyz;
+               result.direction = normalize(worldFar.xyz - worldNear.xyz);
+               return result;
+           }
 
+           float get_linear_depth(float2 uv)
+           {
                float rawDepth = SAMPLE_TEXTURE2D(_CameraDepthTexture, sampler_CameraDepthTexture, uv).r;
-               float depth = LinearEyeDepth(rawDepth, _ZBufferParams);
+               return LinearEyeDepth(rawDepth, _ZBufferParams);
+           }
 
-               float startDepth = _StepSize * SAMPLE_TEXTURE2D(_Dither, sampler_Dither, uv * _ScreenParams.xy / 1024).r;
+           float get_start_depth(float2 uv)
+           {
+               return _StepSize * SAMPLE_TEXTURE2D(_Dither, sampler_Dither, uv * _ScreenParams.xy * _Dither_TexelSize.xy).r;
+           }
 
-               float4 clouds = raymarch(origin, direction, startDepth, depth);
+           float4 frag(Varyings input) : SV_Target
+           {
+               float2 uv = input.texcoord.xy;
+               ray ray = get_ray(uv);
+               float depth = get_linear_depth(uv);
+               float startDepth = get_start_depth(uv);
+               
+               float4 clouds = raymarch(ray.origin, ray.direction, startDepth, depth);
+               
                float4 blit = SAMPLE_TEXTURE2D(_BlitTexture, sampler_BlitTexture, uv);
-
                float3 color = blit.rgb * (1 - clouds.a) + clouds.rgb;
-
+               
                return float4(color, 1.0);
            }
 
