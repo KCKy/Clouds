@@ -6,6 +6,7 @@ using UnityEngine.Rendering.Universal;
 
 public class CloudySkyRenderPass : ScriptableRenderPass
 {
+    static readonly int CloudMapOffset = Shader.PropertyToID("_CloudMapOffset");
     readonly Material _material;
 
     public CloudySkyRenderPass(Material material)
@@ -17,9 +18,10 @@ public class CloudySkyRenderPass : ScriptableRenderPass
 
     void UpdateSettings()
     {
-        //var volumeComponent = VolumeManager.instance.stack.GetComponent<CloudsVolumeComponent>();
-        //ColorParameter color = volumeComponent.testColor;
-        //_material.color = color.overrideState ? color.value : Color.white;
+        var volumeComponent = VolumeManager.instance.stack.GetComponent<CloudsVolumeComponent>();
+        FloatParameter cloudMapOffset = volumeComponent.cloudMapOffset;
+        if (!cloudMapOffset.overrideState) return;
+        _material.SetFloat(CloudMapOffset, cloudMapOffset.value);
     }
 
     public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)

@@ -15,8 +15,8 @@ public class CloudsVolumeController : MonoBehaviour
 
     void Update()
     {
-        if (_cloudsVolumeComponent == null) return;
-        //_cloudsVolumeComponent.testColor.overrideState = true;
-        //_cloudsVolumeComponent.testColor.value = _palette[Time.time];
+        if (!_cloudsVolumeComponent) return;
+        _cloudsVolumeComponent.cloudMapOffset.overrideState = true;
+        _cloudsVolumeComponent.cloudMapOffset.value = 0.6f * Mathf.Abs(Mathf.Sin(Time.time * 0.2f));
     }
 }

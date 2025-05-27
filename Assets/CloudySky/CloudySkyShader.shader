@@ -4,10 +4,10 @@ Shader "Team-Like Team/Clouds"
    {
        [HDR] _Sunlight ("Sunlight", Color) = (0.8, 0.48, 0.24, 1)
        [HDR] _AmbientLight ("Ambient Light", Color) = (0.1, 0.1, 0.1, 1)
+       [NoScaleOffset] _StaticCloudMap ("Static Cloud Map", 2D) = "white"
        [NoScaleOffset] _CloudMap ("Cloud Map", 2D) = "white"
        _MaxSteps ("Max Steps", Integer) = 150
        _StepSize ("Base Step Size", Float) = 0.06
-       _PosOffset ("Cloud Pattern Offset", Vector) = (0, 0, 0, 0)
        _DensityMultiplier ("Density Multiplier", Float) = 5
        [NoScaleOffset] _Noise ("Noise Texture", 3D) = "white"
        [NoScaleOffset] _Dither ("Dither Texture", 2D) = "white"
@@ -19,10 +19,8 @@ Shader "Team-Like Team/Clouds"
        _SunSampleStep ("Sun Sampling Step", Float) = 0.3
        _SunNoiseOctaves ("Sun Noise Octaves", Integer) = 2
        _UnitsPerTexel ("Units Per Texel", Float) = 1
-       _LayerNoiseOctaves ("Layer Noise Octaves", Integer) = 1
-       _LayerNoiseOctaveOffset ("Layer Noise Offset per Octave", Vector) = (0, 0, 0, 0)
-       _LayerNoiseFrequency ("Layer Noise Frequency", Float) = 0.004
        _StartDepth("Cloud Start Depth", float) = 1
+       _CloudMapOffset("Cloud Map Offset", float) = 0
    }
    SubShader
    {
@@ -40,7 +38,6 @@ Shader "Team-Like Team/Clouds"
            float3 _AmbientLight;
            int _MaxSteps;
            float _StepSize;
-           float3 _PosOffset;
            float _DensityMultiplier;
            float _NoiseFrequency;
            float _NoiseOctaves;
@@ -49,11 +46,9 @@ Shader "Team-Like Team/Clouds"
            int _MaxSunSteps;
            float _SunSampleStep;
            int _SunNoiseOctaves;
-           float3 _LayerNoiseOctaveOffset;
-           int _LayerNoiseOctaves;
-           float _LayerNoiseFrequency;
            float _UnitsPerTexel;
            float _StartDepth;
+           float _CloudMapOffset;
           
            // TEXTURE2D(_BlitTexture); Already defined
            SAMPLER(sampler_BlitTexture);
@@ -71,6 +66,9 @@ Shader "Team-Like Team/Clouds"
            TEXTURE2D(_CloudMap);
            SAMPLER(sampler_CloudMap);
            float4 _CloudMap_TexelSize;
+
+           TEXTURE2D(_StaticCloudMap);
+           SAMPLER(sampler_StaticCloudMap);
 
            float signed_distance_sphere(float3 position, float radius)
            {
@@ -92,28 +90,14 @@ Shader "Team-Like Team/Clouds"
                }
                return res;
            }
-           
-           float2 layerNoise(float3 x)
-           {
-               float2 res = 0;
-               float factor = 2.02;
-               float amplitude = 0.5;
-               for (int i = 0; i < _LayerNoiseOctaves; i++) {
-                   float3 pos = x + _LayerNoiseOctaveOffset * i; 
-                   float2 noise = _Noise.SampleLevel(sampler_Noise, pos * _LayerNoiseFrequency, 0).xy * 2. - 1;
-                   res += amplitude * noise;
-                   x *= factor;
-                   factor += 0.21;
-                   amplitude *= 0.5;
-               }
-               return res;
-           }
 
            float4 sample_cloud_map(float3 position)
            {
-                float2 base = float2(position.x, position.y) / _UnitsPerTexel; 
+                float2 base = float2(position.x, position.y) / _UnitsPerTexel;
                 float2 uv = base * _CloudMap_TexelSize.xy;
-                return _CloudMap.SampleLevel(sampler_CloudMap, uv, 0);
+                float4 first = _CloudMap.SampleLevel(sampler_CloudMap, uv + float2(0, _CloudMapOffset), 0);
+                float4 second = _StaticCloudMap.SampleLevel(sampler_StaticCloudMap, uv, 0);
+                return float4(lerp(first, second, second.a / (first.a + second.a)));
            }
 
            float getDensity(float3 p, int quality) {

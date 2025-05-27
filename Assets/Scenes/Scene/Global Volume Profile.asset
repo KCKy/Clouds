@@ -27,3 +27,6 @@ MonoBehaviour:
   m_Name: CloudsVolumeComponent
   m_EditorClassIdentifier: 
   active: 1
+  cloudMapOffset:
+    m_OverrideState: 1
+    m_Value: 0
