@@ -93,9 +93,9 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints:
-    - _LayerNoiseOctaves: 1
-    - _MaxSteps: 40
-    - _MaxSunSteps: 10
+    - _LayerNoiseOctaves: 0
+    - _MaxSteps: 50
+    - _MaxSunSteps: 8
     - _NoiseOctaves: 6
     m_Floats:
     - _AddPrecomputedVelocity: 0
@@ -117,9 +117,9 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _LayerNoiseFrequency: 0.004
+    - _LayerNoiseFrequency: 0
     - _Metallic: 0
-    - _NoiseFrequency: 0.004
+    - _NoiseFrequency: 0.0002
     - _OcclusionStrength: 1
     - _OriginDepth: 5
     - _Parallax: 0.005
@@ -130,15 +130,15 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
-    - _StartDepth: 3
-    - _StepSize: 0.2
-    - _SunSampleStep: 0.3
+    - _StartDepth: 1
+    - _StepSize: 3
+    - _SunSampleStep: 5
     - _Surface: 0
-    - _UnitsPerTexel: 1
+    - _UnitsPerTexel: 2
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _AmbientLight: {r: 0.277, g: 0.277, b: 0.277, a: 1}
+    - _AmbientLight: {r: 0.010517815, g: 0.0023347465, b: 0.012691442, a: 0}
     - _BallScale: {r: 3, g: 1, b: 3, a: 0}
     - _BaseColor: {r: 0.305, g: 0.305, b: 0.305, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
@@ -150,7 +150,7 @@ Material:
     - _ShadowColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SunDirection: {r: 4.3, g: 10, b: -7.3, a: 0}
-    - _Sunlight: {r: 1.1313709, g: 0.8692726, b: 0.67429703, a: 1}
+    - _Sunlight: {r: 4.5412064, g: 3.9943907, b: 1.3923509, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &6043687739360127644

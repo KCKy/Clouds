@@ -8,7 +8,6 @@ Shader "Team-Like Team/Clouds"
        _MaxSteps ("Max Steps", Integer) = 150
        _StepSize ("Step Size", Float) = 0.06
        _PosOffset ("Cloud Pattern Offset", Vector) = (0, 0, 0, 0)
-       _BallScale ("Ball Scale", Vector) = (1, 1, 1, 0)
        _DensityMultiplier ("Density Multiplier", Float) = 5
        [NoScaleOffset] _Noise ("Noise Texture", 3D) = "white"
        [NoScaleOffset] _Dither ("Dither Texture", 2D) = "white"
@@ -41,7 +40,6 @@ Shader "Team-Like Team/Clouds"
            int _MaxSteps;
            float _StepSize;
            float3 _PosOffset;
-           float3 _BallScale;
            float _DensityMultiplier;
            float _NoiseFrequency;
            float _NoiseOctaves;
@@ -112,39 +110,12 @@ Shader "Team-Like Team/Clouds"
            float4 sample_cloud_map(float3 position)
            {
                 float2 base = float2(position.x, position.y) / _UnitsPerTexel; 
-                float2 offset = layerNoise(position);
-                float2 uv = (base + offset) * _CloudMap_TexelSize.xy;
+                float2 uv = base * _CloudMap_TexelSize.xy;
                 return _CloudMap.SampleLevel(sampler_CloudMap, uv, 0);
            }
-
-           float raymarchTransmittedLight(float3 destination, float initialDensity) {
-               float3 sunDir = normalize(_SunDirection.xyz);
-               float depth = 0;
-               float lastDensity = initialDensity;
-               float intensity = 1;
-
-               for (int i = 0; i < _MaxSteps; i++)
-               {
-                    float3 p = destination + depth * sunDir;
-                    float step = _StepSize;
-                    float density = fractalNoise(p);
-                    float lineDensity = (density + lastDensity) * step * _DensityMultiplier;
-                    if (lineDensity > 0.0)
-                    {
-                        float transparency = exp(-lineDensity);
-                        intensity *= transparency;
-                    }
-
-                    depth += _StepSize;
-                    lastDensity = density;
-               }
-
-               return intensity;
-           }
-
+           
            float3 getColor(float3 color, float3 position, float density) {
-               //float light = raymarchTransmittedLight(position, density);
-               return color + _AmbientLight * clamp(1 - density, 0, 1) /*+ _Sunlight * light*/;
+               return color + _AmbientLight * clamp(1 - density, 0, 1);
            }
            
            float4 raymarch(float3 origin, float3 direction, float startDepth, float maxDepth)
@@ -159,7 +130,7 @@ Shader "Team-Like Team/Clouds"
                     float3 p = origin + depth * direction;
                     float4 baseColor = sample_cloud_map(p);
                     float step = max(min(depth, maxDepth) - depth + _StepSize, 0);
-                    float density = fractalNoise(p) * baseColor.a;
+                    float density = clamp(fractalNoise(p) - 1 + baseColor.a, 0, 1);
                     float lineDensity = (density + lastDensity) * step * _DensityMultiplier;
                     if (lineDensity > 0.0)
                     {
