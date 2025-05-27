@@ -111,7 +111,7 @@ Material:
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
-    - _CloudMapOffset: 0.4280545
+    - _CloudMapOffset: 1
     - _Cull: 2
     - _Cutoff: 0.5
     - _DensityMultiplier: 1

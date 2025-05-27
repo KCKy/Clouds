@@ -9,6 +9,8 @@ public class CloudCamera : MonoBehaviour
     [SerializeField] int width;
     [SerializeField] int height;
     [SerializeField] int antiAliasing;
+    [SerializeField] float windChange;
+    [SerializeField] float windStrength;
     
     void Awake() => _camera = GetComponent<Camera>();
     
@@ -29,7 +31,19 @@ public class CloudCamera : MonoBehaviour
         texture.Create();
         _camera.targetTexture = texture;
         targetBillboard.material.mainTexture = texture;
+        _zOffset = Random.Range(100, 300);
     }
     
     void Start() => CreateTexture();
+    
+    float _zOffset;
+    float _x;
+
+    void Update()
+    {
+        _x += Time.deltaTime * windChange;
+        float x = Mathf.PerlinNoise1D(_x);
+        float z = Mathf.PerlinNoise1D(_x + _zOffset);
+        transform.position += new Vector3(x, 0, z) * (Time.deltaTime * windStrength);
+    }
 }
