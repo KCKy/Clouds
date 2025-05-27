@@ -95,7 +95,7 @@ Material:
     m_Ints:
     - _LayerNoiseOctaves: 0
     - _MaxSteps: 50
-    - _MaxSunSteps: 8
+    - _MaxSunSteps: 3
     - _NoiseOctaves: 6
     m_Floats:
     - _AddPrecomputedVelocity: 0
@@ -132,7 +132,7 @@ Material:
     - _SrcBlendAlpha: 1
     - _StartDepth: 1
     - _StepSize: 3
-    - _SunSampleStep: 5
+    - _SunSampleStep: 1
     - _Surface: 0
     - _UnitsPerTexel: 2
     - _WorkflowMode: 1
