@@ -4,13 +4,14 @@ Shader "Team-Like Team/Clouds"
    {
        [HDR] _Sunlight ("Sunlight", Color) = (0.8, 0.48, 0.24, 1)
        [HDR] _AmbientLight ("Ambient Light", Color) = (0.1, 0.1, 0.1, 1)
+       [NoScaleOffset] _CloudMap ("Cloud Map", 2D) = "white"
        _MaxSteps ("Max Steps", Integer) = 150
        _StepSize ("Step Size", Float) = 0.06
        _PosOffset ("Cloud Pattern Offset", Vector) = (0, 0, 0, 0)
        _BallScale ("Ball Scale", Vector) = (1, 1, 1, 0)
        _DensityMultiplier ("Density Multiplier", Float) = 5
-       [NoScaleOffset] _Noise ("Noise Texture", 3D) = ""
-       [NoScaleOffset] _Dither ("Dither Texture", 2D) = ""
+       [NoScaleOffset] _Noise ("Noise Texture", 3D) = "white"
+       [NoScaleOffset] _Dither ("Dither Texture", 2D) = "white"
        _NoiseFrequency ("Noise Frequency", Float) = 0.1
        _NoiseOctaves ("Noise Octaves", Integer) = 3
        _NoiseOctaveOffset ("Noise Offset per Octave", Vector) = (0, 0, 0, 0)
@@ -18,6 +19,10 @@ Shader "Team-Like Team/Clouds"
        _MaxSunSteps ("Max Steps Towards Sun", Integer) = 10
        _SunSampleStep ("Sun Sampling Step", Float) = 0.3
        _UnitsPerTexel ("Units Per Texel", Float) = 1
+       _LayerNoiseOctaves ("Layer Noise Octaves", Integer) = 1
+       _LayerNoiseOctaveOffset ("Layer Noise Offset per Octave", Vector) = (0, 0, 0, 0)
+       _LayerNoiseFrequency ("Layer Noise Frequency", Float) = 0.004
+       _StartDepth("Cloud Start Depth", float) = 1
    }
    SubShader
    {
@@ -48,6 +53,7 @@ Shader "Team-Like Team/Clouds"
            int _LayerNoiseOctaves;
            float _LayerNoiseFrequency;
            float _UnitsPerTexel;
+           float _StartDepth;
           
            // TEXTURE2D(_BlitTexture); Already defined
            SAMPLER(sampler_BlitTexture);
@@ -158,7 +164,7 @@ Shader "Team-Like Team/Clouds"
                     if (lineDensity > 0.0)
                     {
                         float transparency = exp(-lineDensity);
-                        float3 color = getColor(p, density, baseColor);
+                        float3 color = getColor(baseColor.rgb, p, density);
                         result += color * (1 - transparency) * intensity;
                         intensity *= transparency;
                     }
@@ -200,7 +206,7 @@ Shader "Team-Like Team/Clouds"
 
            float get_start_depth(float2 uv)
            {
-               return _StepSize * SAMPLE_TEXTURE2D(_Dither, sampler_Dither, uv * _ScreenParams.xy * _Dither_TexelSize.xy).r;
+               return _StepSize * SAMPLE_TEXTURE2D(_Dither, sampler_Dither, uv * _ScreenParams.xy * _Dither_TexelSize.xy).r + _StartDepth;
            }
 
            float4 frag(Varyings input) : SV_Target
