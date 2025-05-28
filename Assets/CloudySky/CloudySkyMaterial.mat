@@ -99,7 +99,7 @@ Material:
     m_Ints:
     - _LayerNoiseOctaves: 0
     - _MaxSteps: 100
-    - _MaxSunSteps: 5
+    - _MaxSunSteps: 8
     - _NoiseOctaves: 6
     - _SunNoiseOctaves: 3
     m_Floats:
@@ -138,7 +138,7 @@ Material:
     - _SrcBlendAlpha: 1
     - _StartDepth: 1
     - _StepSize: 3
-    - _SunSampleStep: 0.5
+    - _SunSampleStep: 0.2
     - _Surface: 0
     - _UnitsPerTexel: 2
     - _WorkflowMode: 1

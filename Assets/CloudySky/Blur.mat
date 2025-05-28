@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Bicubic
+  m_Name: Blur
   m_Shader: {fileID: 4800000, guid: 39b269852bee4c1a9a89c16efc18bae6, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -62,7 +62,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: a71ca2c99e6545e4ebecca843a458ac3, type: 3}
+        m_Texture: {fileID: 2800000, guid: 49cdae78f9eebb74d8b2d312ead37b26, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:

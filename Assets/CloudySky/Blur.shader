@@ -1,4 +1,4 @@
-Shader "Team-Like Team/Bicubic"
+Shader "Team-Like Team/Blur"
 {
     Properties
     {
@@ -34,11 +34,32 @@ Shader "Team-Like Team/Bicubic"
                 output.uv = uv;
                 return output;
             }
-            
-            float3 frag(float4 position : SV_Position, float2 uv : TexCoord0) : SV_TARGET
+
+            float4 frag(float4 position : SV_Position, float2 uv : TEXCOORD0) : SV_TARGET
             {
-                return float4(_MainTex.SampleLevel(sampler_MainTex, uv, 0));
+                float2 texelSize = _MainTex_TexelSize.xy;
+
+                float kernel[4] = { 0.05, 0.25, 0.4, 0.25 };
+
+                float4 result = float4(0, 0, 0, 0);
+                float totalWeight = 0.0;
+
+                for (int j = 0; j < 4; j++)
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        float2 offset = float2(i - 1, j - 1);
+                        float2 coord = uv + offset * texelSize;
+                        float w = kernel[i] * kernel[j];
+                        result += _MainTex.SampleLevel(sampler_MainTex, coord, 0) * w;
+                        totalWeight += w;
+                    }
+                }
+
+                return result / totalWeight;
             }
+
+
             ENDHLSL
         }
     }
