@@ -147,8 +147,6 @@ Shader "Team-Like Team/Clouds"
                 float intensity = 1;
                 float totalDensity = 0;
 
-                float maxStepSize = 0;
-
                 for (int i = 0; i < _MaxSteps; i++)
                 {
                     float3 p = origin + depth * direction;
@@ -168,8 +166,6 @@ Shader "Team-Like Team/Clouds"
 
                     depth += _StepSize;
                     lastDensity = density;
-
-                    maxStepSize = max(step, maxStepSize);
                 }
 
                 return float4(result, 1 - intensity);
